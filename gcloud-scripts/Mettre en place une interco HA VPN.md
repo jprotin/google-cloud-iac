@@ -8,7 +8,7 @@ Le VPN haute disponibilité est une solution VPN régionale et par VPC. Les pass
 
 Dans cet atelier, vous allez créer un VPC mondial nommé vpc-demo, avec deux sous-réseaux personnalisés dans us-east1 et us-central1. Dans ce VPC, vous ajouterez une instance Compute Engine dans chaque région. Vous créerez ensuite un second VPC nommé on-prem pour simuler le centre de données sur site d'un client. Dans ce second VPC, vous ajouterez un sous-réseau dans la région us-central1 et une instance Compute Engine exécutée dans cette région. Enfin, vous ajouterez un VPN haute disponibilité et un routeur cloud dans chaque VPC, puis exécuterez deux tunnels à partir de chaque passerelle VPN haute disponibilité avant de tester la configuration pour vérifier que le contrat de niveau de service atteint 99,99 %.
 
-![alt ha-vpn][./img/HA-VPN-schema.png]
+![alt ha-vpn](./img/HA-VPN-schema.png)
 
 ## Objectifs
 
