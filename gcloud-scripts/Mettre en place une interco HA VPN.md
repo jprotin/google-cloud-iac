@@ -367,7 +367,7 @@ Configurez des règles de pare-feu afin d'autoriser le trafic provenant des plag
 gcloud compute firewall-rules create $ONP_SUB_FROM_VPC \
     --network $ONPREM_NAME \
     --allow tcp,udp,icmp \
-    --source-ranges 10.1.1.0/24,10.2.
+    --source-ranges 10.1.1.0/24,10.2.1.0/24
 ```
 
 ## Vérifier le statut des tunnels   
