@@ -20,7 +20,7 @@ Dans cet atelier, vous allez apprendre à effectuer les tâches suivantes :
 - Configurer le mode de routage dynamique global
 - Vérifier et tester la configuration de la passerelle VPN haute disponibilité
 
-## Tableau de variables contenant les valeurs associé à votre projet
+## Tableau de variables contenant les valeurs associées à votre projet
 
 | Variables         | Valeurs                             |
 | ----------------- |:-----------------------------------:|
@@ -64,13 +64,15 @@ Dans cet atelier, vous allez apprendre à effectuer les tâches suivantes :
 
 ## Mise en place d'un VPC sur Google Cloud
 
-### setup d'un Global VPC
+Configuration d'un VPC mondial avec deux sous-réseaux personnalisés et deux instances de VM s'exécutant dans chaque zone.
+
+### Setup d'un Global VPC
 
 ```
 gcloud compute networks create $VPC_NAME --subnet-mode custom
 ```
 
-### setup du subnet
+### Setup des subnets
 
 ```
 gcloud compute networks subnets create $VPC_SUBNET1 \
@@ -97,7 +99,7 @@ gcloud compute firewall-rules create $VPC_FW_ICMP \
     --allow tcp:22,icmp
 ```
 
-### création des VMs pour les subnets
+### Création des VMs pour les subnets
 
 ```
 gcloud compute instances create $VPC_VM1 --zone $ZONE1A --subnet $VPC_SUBNET1
@@ -105,7 +107,9 @@ gcloud compute instances create $VPC_VM1 --zone $ZONE1A --subnet $VPC_SUBNET1
 gcloud compute instances create $VPC_VM2 --zone $ZONE1B --subnet $VPC_SUBNET2
 ```
 
-## Simuler un VPC network onPrem sur GCP
+## Simuler un VPC network onPremise sur GCP
+
+Création d'un VPC appelé $ONPREM_NAME qui simule un environnement sur site à partir duquel un client se connecte à l'environnement Google Cloud.
 
 ### Créer le VPC
 
@@ -120,7 +124,7 @@ gcloud compute networks subnets create $ONP_SUBNET  \
 --network $ONPREM_NAME --range 192.168.1.0/24 --region $REGION1
 ```
 
-### créer la règle firewall "allow all custom traffic within the network"
+### Créer la règle firewall "allow all custom traffic within the network"
 
 ```
 gcloud compute firewall-rules create $ONP_FW_AL_CU \
@@ -129,7 +133,7 @@ gcloud compute firewall-rules create $ONP_FW_AL_CU \
   --source-ranges 192.168.0.0/16
 ```
 
-### créer la règle firewall "allow SSH, RDP, HTTP, and ICMP traffic"
+### Créer la règle firewall "allow SSH, RDP, HTTP, and ICMP traffic"
 
 ```
 gcloud compute firewall-rules create $ONP_FW_ICMP \
@@ -137,7 +141,7 @@ gcloud compute firewall-rules create $ONP_FW_ICMP \
     --allow tcp:22,icmp
 ```
 
-### Créer la VM
+### Créer la VM instance
 
 ```
 gcloud compute instances create $ONP_VM1 --zone $ZONE2 --subnet $ONP_SUBNET 
@@ -145,13 +149,15 @@ gcloud compute instances create $ONP_VM1 --zone $ZONE2 --subnet $ONP_SUBNET
 
 ## Configuration du HA VPN
 
-### créer le HA VPN $VPC_NAME
+Création d'une passerelle VPN haute disponibilité dans chaque réseau VPC, puis création des tunnels VPN haute disponibilité sur chaque passerelle Cloud VPN.
+
+### Créer le HA VPN $VPC_NAME
 
 ```
 gcloud compute vpn-gateways create $VPC_VPN_GW1 --network $VPC_NAME --region $REGION1
 ```
 
-### créer le HA VPN $ONPREM_NAME
+### Créer le HA VPN $ONPREM_NAME
 
 ```
 gcloud compute vpn-gateways create $ONP_VPN_GW1 --network $ONPREM_NAME --region $REGION1
@@ -186,7 +192,7 @@ gcloud compute routers create $ONP_ROUTER \
 
 ## Création de 2 tunnels VPNs
 
-### créer le premier tunnel sur $VPC_NAME
+### Créer le premier tunnel sur $VPC_NAME
 
 ```
 gcloud compute vpn-tunnels create $VPC_TUNNEL0 \
@@ -199,7 +205,7 @@ gcloud compute vpn-tunnels create $VPC_TUNNEL0 \
     --interface 0
 ```
 
-### créer le second tunnel VPN sur $VPC_NAME
+### Créer le second tunnel VPN sur $VPC_NAME
 
 ```
 gcloud compute vpn-tunnels create $VPC_TUNNEL1 \
@@ -212,7 +218,7 @@ gcloud compute vpn-tunnels create $VPC_TUNNEL1 \
     --interface 1
 ```
 
-### créer le premier tunnel sur $ONPREM_NAME
+### Créer le premier tunnel sur $ONPREM_NAME
 
 ```
 gcloud compute vpn-tunnels create $ONP_TUNNEL0 \
@@ -225,7 +231,7 @@ gcloud compute vpn-tunnels create $ONP_TUNNEL0 \
     --interface 0
 ```
 
-### créer le second tunnel VPN sur $ONPREM_NAME
+### Créer le second tunnel VPN sur $ONPREM_NAME
 
 ```
 gcloud compute vpn-tunnels create $ONP_TUNNEL1 \
@@ -240,7 +246,9 @@ gcloud compute vpn-tunnels create $ONP_TUNNEL1 \
 
 ## Créer un peering BGP (Border Gateway Protocol) pour chaque tunnel
 
-### créer l'interface router pour le tunnel0 dans le $VPC_NAME
+Configuration l'appairage BGP pour chaque tunnel VPN entre vpc-demo et le VPC on-prem. Les VPN haute disponibilité nécessitent un routage dynamique pour permettre une disponibilité de 99,99 %.
+
+### Créer l'interface router pour le tunnel0 dans le $VPC_NAME
 
 ```
 gcloud compute routers add-interface $VPC_ROUTER \
@@ -251,7 +259,7 @@ gcloud compute routers add-interface $VPC_ROUTER \
     --region $REGION1
 ```
 
-### créer le BGP peer pour tunnel0 dans le $VPC_NAME
+### Créer le BGP peer pour tunnel0 dans le $VPC_NAME
 
 ```
 gcloud compute routers add-bgp-peer $VPC_ROUTER \
@@ -262,7 +270,7 @@ gcloud compute routers add-bgp-peer $VPC_ROUTER \
     --region $REGION1
 ```
 
-### créer l'interface router pour le tunnel0 dans le $VPC_NAME
+### Créer l'interface router pour le tunnel0 dans le $VPC_NAME
 
 ```
 gcloud compute routers add-interface $VPC_ROUTER \
@@ -273,7 +281,7 @@ gcloud compute routers add-interface $VPC_ROUTER \
     --region $REGION1
 ```
 
-### créer le BGP peer pour tunnel0 dans le $VPC_NAME
+### Créer le BGP peer pour tunnel0 dans le $VPC_NAME
 
 ```
 gcloud compute routers add-bgp-peer $VPC_ROUTER \
@@ -284,7 +292,7 @@ gcloud compute routers add-bgp-peer $VPC_ROUTER \
     --region $REGION1
 ```
 
-### créer l'interface router pour le tunnel0 dans le $ONPREM_NAME
+### Créer l'interface router pour le tunnel0 dans le $ONPREM_NAME
 
 ```
 gcloud compute routers add-interface $ONP_ROUTER \
@@ -295,7 +303,7 @@ gcloud compute routers add-interface $ONP_ROUTER \
     --region $REGION1
 ```
 
-### créer le BGP peer pour tunnel0 dans le $ONPREM_NAME
+### Créer le BGP peer pour tunnel0 dans le $ONPREM_NAME
 
 ```
 gcloud compute routers add-bgp-peer $ONP_ROUTER \
@@ -306,7 +314,7 @@ gcloud compute routers add-bgp-peer $ONP_ROUTER \
     --region $REGION1
 ```
 
-### créer l'interface router pour le tunnel1 dans le $ONPREM_NAME
+### Créer l'interface router pour le tunnel1 dans le $ONPREM_NAME
 
 ```
 gcloud compute routers add-interface $ONP_ROUTER \
@@ -317,7 +325,7 @@ gcloud compute routers add-interface $ONP_ROUTER \
     --region $REGION1
 ```
 
-### créer le BGP peer pour tunnel1 dans le $ONPREM_NAME
+### Créer le BGP peer pour tunnel1 dans le $ONPREM_NAME
 
 ```
 gcloud compute routers add-bgp-peer $ONP_ROUTER \
@@ -330,6 +338,8 @@ gcloud compute routers add-bgp-peer $ONP_ROUTER \
     
 ## Vérification des configurations de router
 
+Vérifier la configuration du routeur dans les deux VPC. Vous allez configurer, pour chaque VPC, des règles de pare-feu pour autoriser le trafic entre les VPC et vérifier l'état des tunnels. Vous allez également vérifier, pour chaque VPC, la connectivité privée via VPN entre les VPC et activer le mode de routage global pour le VPC.
+
 ```
 gcloud compute routers describe $VPC_ROUTER \
     --region $REGION1
@@ -340,6 +350,8 @@ gcloud compute routers describe $ONP_ROUTER \
 
 ## Autoriser le trafic de $ONPREM_NAME vers $VPC_NAME 
 
+Configurez des règles de pare-feu afin d'autoriser le trafic provenant des plages d'adresses IP privées du VPN de pairs.
+
 ```
 gcloud compute firewall-rules create $VPC_SUB_FROM_ONP \
     --network $VPC_NAME \
@@ -348,6 +360,8 @@ gcloud compute firewall-rules create $VPC_SUB_FROM_ONP \
 ```
 
 ## Autoriser le trafic de $VPC_NAME vers $ONPREM_NAME 
+
+Configurez des règles de pare-feu afin d'autoriser le trafic provenant des plages d'adresses IP privées du VPN de pairs.
 
 ```
 gcloud compute firewall-rules create $ONP_SUB_FROM_VPC \
@@ -358,7 +372,7 @@ gcloud compute firewall-rules create $ONP_SUB_FROM_VPC \
 
 ## Vérifier le statut des tunnels   
 
-### liste des tunnels
+### Liste des tunnels
 
 ```
 gcloud compute vpn-tunnels list    
@@ -440,6 +454,8 @@ ping -c 2 10.2.1.2
 
 ## Tester et vérifier la configuration des tunnels HA VPN
 
+Tester la configuration de haute disponibilité de chaque tunnel VPN afin de vous assurer qu'elle fonctionne.
+
 ### Supprimer le $VPC_TUNNEL0 dans la région $REGION1
 
 ```
@@ -463,6 +479,8 @@ ping -c 3 10.1.1.2
 Le resultat doit être en succès car le trafic sera redirigé vers le second tunnel.
 
 ## Nettoyer un projet de toutes configurations
+
+Nettoyage des ressources que vous avez utilisées. 
 
 ### Supprimer les tunnels
 
