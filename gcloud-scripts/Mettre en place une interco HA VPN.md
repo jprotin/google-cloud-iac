@@ -20,29 +20,71 @@ Dans cet atelier, vous allez apprendre à effectuer les tâches suivantes :
 - Configurer le mode de routage dynamique global
 - Vérifier et tester la configuration de la passerelle VPN haute disponibilité
 
+## Tableau de variables contenant les valeurs associé à votre projet
+
+| Variables         | Valeurs                             |
+| ----------------- |:-----------------------------------:|
+| $VPC_NAME         | vpc-demo                            |
+| $ONPREM_NAME      | on-prem                             |
+| $REGION1          | us-central1                         |
+| $REGION2          | us-east1                            |
+| $ZONE1A           | us-central1-a                       |
+| $ZONE1B           | us-central1-b                       |
+| $ZONE2            | us-east1-b                          |
+| $VPC_SUBNET1      | vpc-demo-subnet1                    |
+| $VPC_SUBNET2      | vpc-demo-subnet2                    |
+| $ONP_SUBNET       | on-prem-subnet1                     |
+| $VPC_FW_AL_CU     | vpc-demo-allow-custom               |
+| $VPC_FW_ICMP      | vpc-demo-allow-ssh-icmp             |
+| $ONP_FW_AL_CU     | on-prem-allow-custom                |
+| $ONP_FW_ICMP      | on-prem-allow-ssh-icmp              |
+| $VPC_VM1          | vpc-demo-instance1                  |
+| $VPC_VM2          | vpc-demo-instance2                  |
+| $ONP_VM1          | on-prem-instance1                   |
+| $VPC_VPN_GW1      | vpc-demo-vpn-gw1                    |
+| $ONP_VPN_GW1      | on-prem-vpn-gw1                     |
+| $VPC_ROUTER       | vpc-demo-router1                    |
+| $ONP_ROUTER       | on-prem-router1                     |
+| $VPC_TUNNEL0      | vpc-demo-tunnel0                    |
+| $VPC_TUNNEL1      | vpc-demo-tunnel1                    |
+| $ONP_TUNNEL0      | on-prem-tunnel0                     |
+| $ONP_TUNNEL1      | on-prem-tunnel1                     |
+| $ONP_SUB_FROM_VPC | on-prem-allow-subnets-from-vpc-demo |
+| $VPC_SUB_FROM_ONP | vpc-demo-allow-subnets-from-on-prem |
+| $ONP_BGP_TUNNEL0  | bgp-on-prem-tunnel0                 |
+| $ONP_BGP_TUNNEL1  | bgp-on-prem-tunnel1                 |
+| $VPC_BGP_TUNNEL0  | bgp-vpc-demo-tunnel0                |
+| $VPC_BGP_TUNNEL1  | bgp-vpc-demo-tunnel1                |
+| $VPC_INTERFACE_T0 | if-tunnel0-to-on-prem               |
+| $VPC_INTERFACE_T1 | if-tunnel1-to-on-prem               |
+| $ONP_INTERFACE_T0 | if-tunnel0-to-vpc-demo              |
+| $ONP_INTERFACE_T1 | if-tunnel1-to-vpc-demo              |
+
+
+
 ## Mise en place d'un VPC sur Google Cloud
 
 ### setup d'un Global VPC
 
 ```
-gcloud compute networks create [vpc-name] --subnet-mode custom
+gcloud compute networks create $VPC_NAME --subnet-mode custom
 ```
 
 ### setup du subnet
 
 ```
-gcloud compute networks subnets create [vpc-name-subnet] \
---network [vpc-name] --range 10.1.1.0/24 --region [Region]
+gcloud compute networks subnets create $VPC_SUBNET1 \
+--network $VPC_NAME --range 10.1.1.0/24 --region $REGION1
 
-gcloud compute networks subnets create [vpc-name-subnet2] \
---network vpc-demo --range 10.2.1.0/24 --region [Region2]
+gcloud compute networks subnets create $VPC_SUBNET2 \
+--network vpc-demo --range 10.2.1.0/24 --region $REGION2
 ```
 
 ### Créer une règle de pare-feu pour autoriser tout le trafic personnalisé au sein du réseau
 
 ```
-gcloud compute firewall-rules create [name-vpc-allow-custom] \
-  --network [vpc-name] \
+gcloud compute firewall-rules create $VPC_FW_AL_CU \
+  --network $VPC_NAME \
   --allow tcp:0-65535,udp:0-65535,icmp \
   --source-ranges 10.0.0.0/8
 ```
@@ -50,17 +92,17 @@ gcloud compute firewall-rules create [name-vpc-allow-custom] \
 ### Créer une règle de pare-feu pour autoriser le trafic SSH et ICMP en provenance de n'importe où
 
 ```
-gcloud compute firewall-rules create [vpc-name-allow-ssh-icmp] \
-    --network vpc-demo \
+gcloud compute firewall-rules create $VPC_FW_ICMP \
+    --network $VPC_NAME \
     --allow tcp:22,icmp
 ```
 
 ### création des VMs pour les subnets
 
 ```
-gcloud compute instances create [vpc-name-instance1] --zone [Zone] --subnet [vpc-name-subnet]
+gcloud compute instances create $VPC_VM1 --zone $ZONE1A --subnet $VPC_SUBNET1
 
-gcloud compute instances create [vpc-name-instance2] --zone [Zone2] --subnet [vpc-name-subnet2]
+gcloud compute instances create $VPC_VM2 --zone $ZONE1B --subnet $VPC_SUBNET2
 ```
 
 ## Simuler un VPC network onPrem sur GCP
@@ -68,21 +110,21 @@ gcloud compute instances create [vpc-name-instance2] --zone [Zone2] --subnet [vp
 ### Créer le VPC
 
 ```
-gcloud compute networks create [name-on-prem] --subnet-mode custom
+gcloud compute networks create $ONPREM_NAME --subnet-mode custom
 ```
 
 ### Créer le subnet
 
 ```
-gcloud compute networks subnets create [name-on-prem-subnet] \
---network [name-on-prem] --range 192.168.1.0/24 --region [Region]
+gcloud compute networks subnets create $ONP_SUBNET  \
+--network $ONPREM_NAME --range 192.168.1.0/24 --region $REGION1
 ```
 
 ### créer la règle firewall "allow all custom traffic within the network"
 
 ```
-gcloud compute firewall-rules create [name-on-prem-allow-custom] \
-  --network [name-on-prem] \
+gcloud compute firewall-rules create $ONP_FW_AL_CU \
+  --network $ONPREM_NAME \
   --allow tcp:0-65535,udp:0-65535,icmp \
   --source-ranges 192.168.0.0/16
 ```
@@ -90,226 +132,226 @@ gcloud compute firewall-rules create [name-on-prem-allow-custom] \
 ### créer la règle firewall "allow SSH, RDP, HTTP, and ICMP traffic"
 
 ```
-gcloud compute firewall-rules create [name-on-prem-allow-ssh-icmp] \
-    --network [on-prem] \
+gcloud compute firewall-rules create $ONP_FW_ICMP \
+    --network $ONPREM_NAME \
     --allow tcp:22,icmp
 ```
 
 ### Créer la VM
 
 ```
-gcloud compute instances create [name-on-prem-instance1] --zone [Region] --subnet [name-on-prem-subnet]
+gcloud compute instances create $ONP_VM1 --zone $ZONE2 --subnet $ONP_SUBNET 
 ```
 
 ## Configuration du HA VPN
 
-### créer le HA VPN [vpc-name]
+### créer le HA VPN $VPC_NAME
 
 ```
-gcloud compute vpn-gateways create [vpc-name-vpn-gw1] --network [vpc-name] --region [Region]
+gcloud compute vpn-gateways create $VPC_VPN_GW1 --network $VPC_NAME --region $REGION1
 ```
 
-### créer le HA VPN [name-on-prem]
+### créer le HA VPN $ONPREM_NAME
 
 ```
-gcloud compute vpn-gateways create [name-on-prem-vpn-gw1] --network [name-on-prem] --region [Region]
+gcloud compute vpn-gateways create $ONP_VPN_GW1 --network $ONPREM_NAME --region $REGION1
 ```
 
 ### Voir la description du VPN Gateway
 
 ```
-gcloud compute vpn-gateways describe [vpc-name-vpn-gw1] --region [Region]
-gcloud compute vpn-gateways describe [name-on-prem-vpn-gw1] --region [Region]
+gcloud compute vpn-gateways describe $VPC_VPN_GW1 --region $REGION1
+gcloud compute vpn-gateways describe $ONP_VPN_GW1 --region $REGION1
 ```
 
 ## Création du Router
 
-### Créer le router sur [vpc-name]
+### Créer le router sur $VPC_NAME
 
 ```
-gcloud compute routers create [vpc-name-router] \
-    --region [Region] \
-    --network [vpc-name] \
+gcloud compute routers create $VPC_ROUTER \
+    --region $REGION1 \
+    --network $VPC_NAME \
     --asn 65001
 ```
 
-### Créer le router sur [name-on-prem]
+### Créer le router sur $ONPREM_NAME
 
 ```
-gcloud compute routers create [name-on-prem-router] \
-    --region [Region] \
-    --network [vpc-name] \
+gcloud compute routers create $ONP_ROUTER \
+    --region $REGION1 \
+    --network $VPC_NAME \
     --asn 65002
 ```
 
 ## Création de 2 tunnels VPNs
 
-### créer le premier tunnel sur [vpc-name]
+### créer le premier tunnel sur $VPC_NAME
 
 ```
-gcloud compute vpn-tunnels create [vpc-name-tunnel0] \
-    --peer-gcp-gateway [name-on-prem-vpn-gw1] \
-    --region [Region] \
+gcloud compute vpn-tunnels create $VPC_TUNNEL0 \
+    --peer-gcp-gateway $ONP_VPN_GW1 \
+    --region $REGION1 \
     --ike-version 2 \
     --shared-secret [SHARED_SECRET] \
-    --router [vpc-name-router] \
-    --vpn-gateway [vpc-name-vpn-gw1] \
+    --router $VPC_ROUTER \
+    --vpn-gateway $VPC_VPN_GW1 \
     --interface 0
 ```
 
-### créer le second tunnel VPN sur [vpc-name]
+### créer le second tunnel VPN sur $VPC_NAME
 
 ```
-gcloud compute vpn-tunnels create [vpc-name-tunnel1] \
-    --peer-gcp-gateway [name-on-prem-vpn-gw1] \
-    --region [Region] \
+gcloud compute vpn-tunnels create $VPC_TUNNEL1 \
+    --peer-gcp-gateway $ONP_VPN_GW1 \
+    --region $REGION1 \
     --ike-version 2 \
     --shared-secret [SHARED_SECRET] \
-    --router [vpc-name-router] \
-    --vpn-gateway [vpc-name-vpn-gw1] \
+    --router $VPC_ROUTER \
+    --vpn-gateway $VPC_VPN_GW1 \
     --interface 1
 ```
 
-### créer le premier tunnel sur [name-on-prem]
+### créer le premier tunnel sur $ONPREM_NAME
 
 ```
-gcloud compute vpn-tunnels create [name-on-prem-tunnel0] \
-    --peer-gcp-gateway [vpc-name-vpn-gw1] \
-    --region [Region] \
+gcloud compute vpn-tunnels create $ONP_TUNNEL0 \
+    --peer-gcp-gateway $VPC_VPN_GW1 \
+    --region $REGION1 \
     --ike-version 2 \
     --shared-secret [SHARED_SECRET] \
-    --router [name-on-prem-router] \
-    --vpn-gateway [name-on-prem-vpn-gw1] \
+    --router $ONP_ROUTER \
+    --vpn-gateway $ONP_VPN_GW1 \
     --interface 0
 ```
 
-### créer le second tunnel VPN sur [name-on-prem]
+### créer le second tunnel VPN sur $ONPREM_NAME
 
 ```
-gcloud compute vpn-tunnels create [name-on-prem-tunnel1] \
-    --peer-gcp-gateway [vpc-name-vpn-gw1] \
-    --region [Region] \
+gcloud compute vpn-tunnels create $ONP_TUNNEL1 \
+    --peer-gcp-gateway $VPC_VPN_GW1 \
+    --region $REGION1 \
     --ike-version 2 \
     --shared-secret [SHARED_SECRET] \
-    --router [name-on-prem-router] \
-    --vpn-gateway [name-on-prem-vpn-gw1] \
+    --router $ONP_ROUTER \
+    --vpn-gateway $ONP_VPN_GW1 \
     --interface 1    
 ```
 
 ## Créer un peering BGP (Border Gateway Protocol) pour chaque tunnel
 
-### créer l'interface router pour le tunnel0 dans le [vpc-name]
+### créer l'interface router pour le tunnel0 dans le $VPC_NAME
 
 ```
-gcloud compute routers add-interface [vpc-name-router] \
-    --interface-name if-tunnel0-to-on-prem \
+gcloud compute routers add-interface $VPC_ROUTER \
+    --interface-name $VPC_INTERFACE_T0 \
     --ip-address 169.254.0.1 \
     --mask-length 30 \
-    --vpn-tunnel [vpc-name-tunnel0] \
-    --region [Region]
+    --vpn-tunnel $VPC_TUNNEL0 \
+    --region $REGION1
 ```
 
-### créer le BGP peer pour tunnel0 dans le [vpc-name]
+### créer le BGP peer pour tunnel0 dans le $VPC_NAME
 
 ```
-gcloud compute routers add-bgp-peer [vpc-name-router] \
-    --peer-name bgp-on-prem-tunnel0 \
-    --interface if-tunnel0-to-on-prem \
+gcloud compute routers add-bgp-peer $VPC_ROUTER \
+    --peer-name $ONP_BGP_TUNNEL0 \
+    --interface $VPC_INTERFACE_T0 \
     --peer-ip-address 169.254.0.2 \
     --peer-asn 65002 \
-    --region [Region]
+    --region $REGION1
 ```
 
-### créer l'interface router pour le tunnel0 dans le [vpc-name]
+### créer l'interface router pour le tunnel0 dans le $VPC_NAME
 
 ```
-gcloud compute routers add-interface [vpc-name-router] \
-    --interface-name if-tunnel1-to-on-prem \
+gcloud compute routers add-interface $VPC_ROUTER \
+    --interface-name $VPC_INTERFACE_T1 \
     --ip-address 169.254.1.1 \
     --mask-length 30 \
-    --vpn-tunnel [vpc-name-tunnel1] \
-    --region [Region]
+    --vpn-tunnel $VPC_TUNNEL1 \
+    --region $REGION1
 ```
 
-### créer le BGP peer pour tunnel0 dans le [vpc-name]
+### créer le BGP peer pour tunnel0 dans le $VPC_NAME
 
 ```
-gcloud compute routers add-bgp-peer [vpc-name-router] \
-    --peer-name bgp-on-prem-tunnel1 \
-    --interface if-tunnel1-to-on-prem \
+gcloud compute routers add-bgp-peer $VPC_ROUTER \
+    --peer-name $ONP_BGP_TUNNEL1 \
+    --interface $VPC_INTERFACE_T1 \
     --peer-ip-address 169.254.1.2 \
     --peer-asn 65002 \
-    --region [Region]
+    --region $REGION1
 ```
 
-### créer l'interface router pour le tunnel0 dans le [name-on-prem]
+### créer l'interface router pour le tunnel0 dans le $ONPREM_NAME
 
 ```
-gcloud compute routers add-interface [name-on-prem-router] \
-    --interface-name if-tunnel0-to-vpc-demo \
+gcloud compute routers add-interface $ONP_ROUTER \
+    --interface-name $ONP_INTERFACE_T0 \
     --ip-address 169.254.0.2 \
     --mask-length 30 \
-    --vpn-tunnel [name-on-prem-tunnel0] \
-    --region [Region]
+    --vpn-tunnel $ONP_TUNNEL0 \
+    --region $REGION1
 ```
 
-### créer le BGP peer pour tunnel0 dans le [name-on-prem]
+### créer le BGP peer pour tunnel0 dans le $ONPREM_NAME
 
 ```
-gcloud compute routers add-bgp-peer [name-on-prem-router] \
-    --peer-name bgp-vpc-demo-tunnel0 \
-    --interface if-tunnel0-to-vpc-demo \
+gcloud compute routers add-bgp-peer $ONP_ROUTER \
+    --peer-name $VPC_BGP_TUNNEL0 \
+    --interface $ONP_INTERFACE_T0 \
     --peer-ip-address 169.254.0.1 \
     --peer-asn 65001 \
-    --region [Region]
+    --region $REGION1
 ```
 
-### créer l'interface router pour le tunnel1 dans le [name-on-prem]
+### créer l'interface router pour le tunnel1 dans le $ONPREM_NAME
 
 ```
-gcloud compute routers add-interface [name-on-prem-router] \
-    --interface-name if-tunnel1-to-vpc-demo \
+gcloud compute routers add-interface $ONP_ROUTER \
+    --interface-name $ONP_INTERFACE_T1 \
     --ip-address 169.254.1.2 \
     --mask-length 30 \
-    --vpn-tunnel [name-on-prem-tunnel1] \
-    --region [Region]
+    --vpn-tunnel $ONP_TUNNEL1 \
+    --region $REGION1
 ```
 
-### créer le BGP peer pour tunnel1 dans le [name-on-prem]
+### créer le BGP peer pour tunnel1 dans le $ONPREM_NAME
 
 ```
-gcloud compute routers add-bgp-peer [name-on-prem-router] \
-    --peer-name bgp-vpc-demo-tunnel1 \
-    --interface if-tunnel1-to-vpc-demo \
+gcloud compute routers add-bgp-peer $ONP_ROUTER \
+    --peer-name $VPC_BGP_TUNNEL1 \
+    --interface $ONP_INTERFACE_T1 \
     --peer-ip-address 169.254.1.1 \
     --peer-asn 65001 \
-    --region [Region]
+    --region $REGION1
 ```    
     
 ## Vérification des configurations de router
 
 ```
-gcloud compute routers describe [vpc-name-router] \
-    --region [Region]
+gcloud compute routers describe $VPC_ROUTER \
+    --region $REGION1
 
-gcloud compute routers describe [name-on-prem-router] \
-    --region [Region]
+gcloud compute routers describe $ONP_ROUTER \
+    --region $REGION1
 ```
 
-## Autoriser le trafic de [name-on-prem] vers [vpc-name] 
+## Autoriser le trafic de $ONPREM_NAME vers $VPC_NAME 
 
 ```
-gcloud compute firewall-rules create [vpc-name-allow-subnets-from-on-prem] \
-    --network [vpc-name] \
+gcloud compute firewall-rules create $VPC_SUB_FROM_ONP \
+    --network $VPC_NAME \
     --allow tcp,udp,icmp \
     --source-ranges 192.168.1.0/24
 ```
 
-## Autoriser le trafic de [vpc-name] vers [name-on-prem] 
+## Autoriser le trafic de $VPC_NAME vers $ONPREM_NAME 
 
 ```
-gcloud compute firewall-rules create [on-prem-allow-subnets-from-vpc-name] \
-    --network [name-on-prem] \
+gcloud compute firewall-rules create $ONP_SUB_FROM_VPC \
+    --network $ONPREM_NAME \
     --allow tcp,udp,icmp \
     --source-ranges 10.1.1.0/24,10.2.
 ```
@@ -322,47 +364,47 @@ gcloud compute firewall-rules create [on-prem-allow-subnets-from-vpc-name] \
 gcloud compute vpn-tunnels list    
 ```
 
-### Vérifier que [vpc-name-tunnel0] est Up
+### Vérifier que $VPC_TUNNEL0 est Up
 
 ```
-gcloud compute vpn-tunnels describe vpc-demo-tunnel0 \
-      --region [Region]
+gcloud compute vpn-tunnels describe $VPC_TUNNEL0 \
+      --region $REGION1
 ```
 
-### Vérifier que [vpc-name-tunnel1] est Up
+### Vérifier que $VPC_TUNNEL1 est Up
 
 ```
-gcloud compute vpn-tunnels describe vpc-demo-tunnel1 \
-      --region [Region]      
+gcloud compute vpn-tunnels describe $VPC_TUNNEL1 \
+      --region $REGION1      
 ```
 
-### Vérifier que [name-on-prem-tunnel0] est Up
+### Vérifier que $ONP_TUNNEL0 est Up
 
 ```
-gcloud compute vpn-tunnels describe on-prem-tunnel0 \
-      --region [Region]          
+gcloud compute vpn-tunnels describe $ONP_TUNNEL0 \
+      --region $REGION1          
 ```
 
-### Vérifier que [name-on-prem-tunnel1] est Up
+### Vérifier que $ONP_TUNNEL1 est Up
 
 ```
-gcloud compute vpn-tunnels describe on-prem-tunnel1 \
-      --region [Region]
+gcloud compute vpn-tunnels describe $ONP_TUNNEL1 \
+      --region $REGION1
 ```      
       
 ## Vérifier la connectivité privée sur VPN
 
-### Connectez-vous en SSH sur la VM Instance [name-on-prem-instance1]
+### Connectez-vous en SSH sur la VM Instance $ONP_VM1
 
 ```
-gcloud compute ssh [name-on-prem-instance1] --zone [Zone]
+gcloud compute ssh $ONP_VM1 --zone $ZONE1
 ```
 
 Faites "y" pour confirmer de continuer
 
 Taper Enter pour squizzer la partie password
 
-Depuis l'instance [name-on-prem-instance1] dans le réseau [name-on-prem], pour atteindre les instances dans le réseau [vpc-name], ping 10.1.1.2:
+Depuis l'instance $ONP_VM1 dans le réseau $ONPREM_NAME, pour atteindre les instances dans le réseau $VPC_NAME, ping 10.1.1.2:
 
 ```
 ping -c 4 10.1.1.2     
@@ -372,25 +414,25 @@ ping -c 4 10.1.1.2
 
 HA VPN est une ressource régionale et un routeur cloud qui, par défaut, ne voit que les routes de la région dans laquelle il est déployé. Pour atteindre des instances situées dans une région différente de celle du routeur en nuage, vous devez activer le mode de routage global pour le VPC. Cela permet au routeur en nuage de voir et d'annoncer des itinéraires provenant d'autres régions.
 
-### Mettre à jour le mode bgp-routing pour [vpc-name] à GLOBAL      
+### Mettre à jour le mode bgp-routing pour $VPC_NAME à GLOBAL      
 
 ```
-gcloud compute networks update [vpc-name] --bgp-routing-mode GLOBAL
+gcloud compute networks update $VPC_NAME --bgp-routing-mode GLOBAL
 ```
 
 ### Vérifier que le changement est ok
 
 ```
-gcloud compute networks describe [vpc-name]  
+gcloud compute networks describe $VPC_NAME  
 ```    
       
-### Connectez-vous en SSH sur la VM Instance [name-on-prem-instance1]
+### Connectez-vous en SSH sur la VM Instance $ONP_VM1
 
 ```
-gcloud compute ssh [name-on-prem-instance1] --zone [Zone]    
+gcloud compute ssh $ONP_VM1 --zone $ZONE1    
 ```
 
-### Ping l'instance [vpc-name-instance2] dans l'autre région [Region 2]
+### Ping l'instance $VPC_VM2 dans l'autre région $REGION2
 
 ```
 ping -c 2 10.2.1.2
@@ -398,18 +440,18 @@ ping -c 2 10.2.1.2
 
 ## Tester et vérifier la configuration des tunnels HA VPN
 
-### Supprimer le [vpc-name-tunnel0] dans la région [Region]
+### Supprimer le $VPC_TUNNEL0 dans la région $REGION1
 
 ```
-gcloud compute vpn-tunnels delete [vpc-name-tunnel0]  --region [Region]
+gcloud compute vpn-tunnels delete $VPC_TUNNEL0  --region $REGION1
 ```
 
-Répondre "y". Le tunnel0 correspondant dans le réseau [name-on-prem] sera mis hors service.
+Répondre "y". Le tunnel0 correspondant dans le réseau $ONPREM_NAME sera mis hors service.
 
 ### Vérifier que le tunnel est down
 
 ```
-gcloud compute vpn-tunnels describe [name-on-prem-tunnel0]  --region [Region]
+gcloud compute vpn-tunnels describe $ONP_TUNNEL0  --region $REGION1
 ```
 
 ### Revenir sur la session SSH et tester le ping suivant
@@ -425,66 +467,64 @@ Le resultat doit être en succès car le trafic sera redirigé vers le second tu
 ### Supprimer les tunnels
 
 ```
-gcloud compute vpn-tunnels delete [name-on-prem-tunnel0]  --region [Region]
-
-gcloud compute vpn-tunnels delete vpc-demo-tunnel1  --region [Region]
-
-gcloud compute vpn-tunnels delete on-prem-tunnel1  --region [Region]
+gcloud compute vpn-tunnels delete $ONP_TUNNEL0  --region $REGION1
+gcloud compute vpn-tunnels delete $VPC_TUNNEL1  --region $REGION1
+gcloud compute vpn-tunnels delete $ONP_TUNNEL1  --region $REGION1
 ```
 
 ### Supprimer BGP peering
 
 ```
-gcloud compute routers remove-bgp-peer [vpc-name-router] --peer-name bgp-on-prem-tunnel0 --region [Region]
-gcloud compute routers remove-bgp-peer [vpc-name-router] --peer-name bgp-on-prem-tunnel1 --region [Region]
-gcloud compute routers remove-bgp-peer [name-on-prem-router] --peer-name bgp-vpc-demo-tunnel0 --region [Region]
-gcloud compute routers remove-bgp-peer [name-on-prem-router] --peer-name bgp-vpc-demo-tunnel1 --region [Region]
+gcloud compute routers remove-bgp-peer $VPC_ROUTER --peer-name $ONP_BGP_TUNNEL0 --region $REGION1
+gcloud compute routers remove-bgp-peer $VPC_ROUTER --peer-name $ONP_BGP_TUNNEL1 --region $REGION1
+gcloud compute routers remove-bgp-peer $ONP_ROUTER --peer-name $VPC_BGP_TUNNEL0 --region $REGION1
+gcloud compute routers remove-bgp-peer $ONP_ROUTER --peer-name $VPC_BGP_TUNNEL1 --region $REGION1
 ```
 
 ### Supprimer les cloud routers
 
 ```
-gcloud compute  routers delete [name-on-prem-router] --region [Region]
-gcloud compute  routers delete [vpc-name-router] --region [Region]
+gcloud compute  routers delete $ONP_ROUTER --region $REGION1
+gcloud compute  routers delete $VPC_ROUTER --region $REGION1
 ```
 
 ### Supprimer VPN gateways
 
 ```
-gcloud compute vpn-gateways delete [vpc-name-vpn-gw1] --region [Region]
-gcloud compute vpn-gateways delete [name-on-prem-vpn-gw1] --region [Region]
+gcloud compute vpn-gateways delete $VPC_VPN_GW1 --region $REGION1
+gcloud compute vpn-gateways delete $ONP_VPN_GW1 --region $REGION1
 ```
 
 ### Supprimer les VM instances
 
 ```
-gcloud compute instances delete [vpc-name-instance1] --zone [Zone]
-gcloud compute instances delete [vpc-name-instance2] --zone [Zone2]
-gcloud compute instances delete [name-on-prem-instance1] --zone [Zone]
+gcloud compute instances delete $VPC_VM1 --zone $ZONE1
+gcloud compute instances delete $VPC_VM2 --zone $ZONE2
+gcloud compute instances delete $ONP_VM1 --zone $ZONE1
 ```
 
 ### Supprimer les firewall rules
 
 ```
-gcloud compute firewall-rules delete [name-vpc-allow-custom]
-gcloud compute firewall-rules delete [on-prem-allow-subnets-from-vpc-name]
-gcloud compute firewall-rules delete [on-prem-allow-ssh-icmp]
-gcloud compute firewall-rules delete [on-prem-allow-custom]
-gcloud compute firewall-rules delete [vpc-name-allow-subnets-from-on-prem]
-gcloud compute firewall-rules delete [vpc-name-allow-ssh-icmp]
+gcloud compute firewall-rules delete $VPC_FW_AL_CU
+gcloud compute firewall-rules delete $ONP_SUB_FROM_VPC
+gcloud compute firewall-rules delete $ONP_FW_ICMP
+gcloud compute firewall-rules delete $ONP_FW_AL_CU
+gcloud compute firewall-rules delete $VPC_SUB_FROM_ONP
+gcloud compute firewall-rules delete $VPC_FW_ICMP
 ```
 
 ### Supprimer les subnets
 
 ```
-gcloud compute networks subnets delete [vpc-name-subnet1] --region [Region]
-gcloud compute networks subnets delete [vpc-name-subnet2] --region [Region2]
-gcloud compute networks subnets delete [name-on-prem-subnet] --region [Region]
+gcloud compute networks subnets delete $VPC_SUBNET1 --region $REGION1
+gcloud compute networks subnets delete $VPC_SUBNET2 --region $REGION2
+gcloud compute networks subnets delete $ONP_SUBNET  --region $REGION1
 ```
 
 ### Supprimer les VPCs
 
 ```
-gcloud compute networks delete [vpc-name]
-gcloud compute networks delete [name-on-prem]
+gcloud compute networks delete $VPC_NAME
+gcloud compute networks delete $ONPREM_NAME
 ```    
