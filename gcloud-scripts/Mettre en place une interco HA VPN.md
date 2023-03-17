@@ -1,4 +1,4 @@
-# Mettre en place une interconnexion avec un VPN HA
+# Mettre en place une interconnexion avec un VPN HA au format GCLOUD et à la mano
 
 ## Présentation
 
